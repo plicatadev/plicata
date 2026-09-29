@@ -2,6 +2,7 @@
 
 use futures::FutureExt;
 use sc_client_api::{Backend, BlockBackend};
+use sc_consensus::BoxBlockImport;
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_pow::{PowBlockImport, PowVerifier};
 use sc_consensus_grandpa::SharedVoterState;
@@ -31,7 +32,7 @@ pub type Service = sc_service::PartialComponents<
 	sc_consensus::DefaultImportQueue<Block>,
 	sc_transaction_pool::TransactionPoolHandle<Block, FullClient>,
 	(
-		sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+		BoxBlockImport<Block>,
 		sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
 		Option<Telemetry>,
 	),
@@ -89,7 +90,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 	let pow_block_import = PowBlockImport::new(
     grandpa_block_import.clone(),
     client.clone(),
-    pow_algorithm,
+    pow_algorithm.clone(),
     0,
     select_chain.clone(),
     |_parent_hash, ()| async move {
@@ -98,36 +99,14 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
     },
 );
 
-	let cidp_client = client.clone();
-	let import_queue =
-		sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
-			block_import: pow_block_import.clone(),
-			justification_import: Some(Box::new(grandpa_block_import.clone())),
-			client: client.clone(),
-			create_inherent_data_providers: move |parent_hash, _| {
-				let cidp_client = cidp_client.clone();
-				async move {
-					let slot_duration = sc_consensus_aura::standalone::slot_duration_at(
-						&*cidp_client,
-						parent_hash,
-					)?;
-					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+    let import_queue = sc_consensus_pow::import_queue(
+        Box::new(pow_block_import.clone()),
+        Some(Box::new(grandpa_block_import.clone())),
+        pow_algorithm,
+        &task_manager.spawn_essential_handle(),
+        config.prometheus_registry(),
+    )?;
 
-					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
-
-					Ok((slot, timestamp))
-				}
-			},
-			spawner: &task_manager.spawn_essential_handle(),
-			registry: config.prometheus_registry(),
-			check_for_equivocation: Default::default(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			compatibility_mode: Default::default(),
-		})?;
 
 	Ok(sc_service::PartialComponents {
 		client,
@@ -137,7 +116,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		keystore_container,
 		select_chain,
 		transaction_pool,
-		other: (grandpa_block_import, grandpa_link, telemetry),
+		other: (Box::new(pow_block_import), grandpa_link, telemetry),
 	})
 }
 
@@ -253,53 +232,69 @@ pub fn new_full<
 	})?;
 
 	if role.is_authority() {
-		let proposer_factory = sc_basic_authorship::ProposerFactory::new(
-			task_manager.spawn_handle(),
-			client.clone(),
-			transaction_pool.clone(),
-			prometheus_registry.as_ref(),
-			telemetry.as_ref().map(|x| x.handle()),
-		);
+    let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+        task_manager.spawn_handle(),
+        client.clone(),
+        transaction_pool.clone(),
+        prometheus_registry.as_ref(),
+        telemetry.as_ref().map(|x| x.handle()),
+    );
 
-		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+    let pow_algorithm = crate::pow::PlicataPow::new(
+        sp_core::U256::MAX / 1_000_000,
+    );
 
-		let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(
-			StartAuraParams {
-				slot_duration,
-				client,
-				select_chain,
-				block_import,
-				proposer_factory,
-				create_inherent_data_providers: move |_, ()| async move {
-					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+    let (mining_handle, mining_worker) = sc_consensus_pow::start_mining_worker(
+        block_import,
+        client.clone(),
+        select_chain,
+        pow_algorithm,
+        proposer_factory,
+        sync_service.clone(),
+        sync_service.clone(),
+        None,
+        move |_, ()| async move {
+            let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+            Ok((timestamp,))
+        },
+        Duration::from_secs(1),
+        Duration::from_secs(1),
+    );
 
-					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
+    task_manager
+        .spawn_essential_handle()
+        .spawn_blocking("pow-mining-worker", Some("block-authoring"), mining_worker);
 
-					Ok((slot, timestamp))
-				},
-				force_authoring,
-				backoff_authoring_blocks,
-				keystore: keystore_container.keystore(),
-				sync_oracle: sync_service.clone(),
-				justification_sync_link: sync_service.clone(),
-				block_proposal_slot_portion: SlotProportion::new(2f32 / 3f32),
-				max_block_proposal_slot_portion: None,
-				telemetry: telemetry.as_ref().map(|x| x.handle()),
-				compatibility_mode: Default::default(),
-			},
-		)?;
+    let mining_handle = Arc::new(mining_handle);
 
-		// the AURA authoring task is considered essential, i.e. if it
-		// fails we take down the service with it.
-		task_manager
-			.spawn_essential_handle()
-			.spawn_blocking("aura", Some("block-authoring"), aura);
-	}
+task_manager
+    .spawn_essential_handle()
+    .spawn_blocking("plicata-cultivator", Some("block-authoring"), async move {
+        loop {
+            if let Some(metadata) = mining_handle.metadata() {
+                println!("🌱 Cultivator received candidate: pre_hash={:?}, difficulty={}", metadata.pre_hash, metadata.difficulty);
+                let version = mining_handle.version();
+                let handle = mining_handle.clone();
+                let pow = crate::pow::PlicataPow::new(metadata.difficulty);
+                let pre_hash = metadata.pre_hash;
 
+                let seal = pow.cultivate::<Block>(
+                    &pre_hash,
+                    metadata.difficulty,
+                    || handle.version() != version,
+                );
+
+                if let Some(seal) = seal {
+                    println!("⛏️ Cultivator found seal: {:?}", seal);
+                    let accepted = futures::executor::block_on(handle.submit(seal));
+                    println!("🌲 Growth Ring submission accepted: {}", accepted);
+                }
+            }
+
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    });
+}
 	if enable_grandpa {
 		// if the node isn't actively participating in consensus then it doesn't
 		// need a keystore, regardless of which protocol we use below.
