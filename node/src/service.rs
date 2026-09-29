@@ -3,6 +3,7 @@
 use futures::FutureExt;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
+use sc_consensus_pow::{PowBlockImport, PowVerifier};
 use sc_consensus_grandpa::SharedVoterState;
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncConfig};
 use sc_telemetry::{Telemetry, TelemetryWorker};
@@ -63,7 +64,9 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 	});
 
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
-
+        let pow_algorithm = crate::pow::PlicataPow::new(
+    sp_core::U256::MAX / 1_000_000,
+);
 	let transaction_pool = Arc::from(
 		sc_transaction_pool::Builder::new(
 			task_manager.spawn_essential_handle(),
@@ -83,10 +86,22 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 
+	let pow_block_import = PowBlockImport::new(
+    grandpa_block_import.clone(),
+    client.clone(),
+    pow_algorithm,
+    0,
+    select_chain.clone(),
+    |_parent_hash, ()| async move {
+        let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+        Ok((timestamp,))
+    },
+);
+
 	let cidp_client = client.clone();
 	let import_queue =
 		sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
-			block_import: grandpa_block_import.clone(),
+			block_import: pow_block_import.clone(),
 			justification_import: Some(Box::new(grandpa_block_import.clone())),
 			client: client.clone(),
 			create_inherent_data_providers: move |parent_hash, _| {

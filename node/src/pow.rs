@@ -2,6 +2,7 @@ use sc_consensus_pow::{Error, PowAlgorithm};
 use sp_core::U256;
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, BlakeTwo256};
 
+#[derive(Clone)]
 pub struct PlicataPow {
     difficulty: U256,
 }
