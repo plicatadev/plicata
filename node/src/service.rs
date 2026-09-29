@@ -66,7 +66,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
         let pow_algorithm = crate::pow::PlicataPow::new(
-    sp_core::U256::MAX / 1_000_000,
+    crate::pow::initial_target(),
 );
 	let transaction_pool = Arc::from(
 		sc_transaction_pool::Builder::new(
@@ -241,7 +241,7 @@ pub fn new_full<
     );
 
     let pow_algorithm = crate::pow::PlicataPow::new(
-        sp_core::U256::MAX / 1_000_000,
+        crate::pow::initial_target(),
     );
 
     let (mining_handle, mining_worker) = sc_consensus_pow::start_mining_worker(

@@ -3,6 +3,10 @@ use sp_core::U256;
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, BlakeTwo256};
 use std::{thread, time::Duration};
 
+/// Initial PoW target for the Plicata development network.
+/// Higher targets make cultivation easier; lower targets make it harder.
+pub fn initial_target() -> U256 { U256::MAX / 1_000_000 }
+
 #[derive(Clone)]
 pub struct PlicataPow {
     difficulty: U256,
@@ -62,9 +66,7 @@ fn verify(
     let hash = BlakeTwo256::hash(&input);
 let hash_value = U256::from_big_endian(hash.as_bytes());
 
-println!("PoW hash as U256: {}", hash_value);
 
-    println!("PoW test hash: {:?}", hash);
 
     Ok(hash_value <= _difficulty)
 }
