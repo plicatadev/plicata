@@ -1,6 +1,7 @@
 use sc_consensus_pow::{Error, PowAlgorithm};
 use sp_core::U256;
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, BlakeTwo256};
+use std::{thread, time::Duration};
 
 #[derive(Clone)]
 pub struct PlicataPow {
@@ -15,17 +16,23 @@ impl PlicataPow {
     pub fn cultivate<B: BlockT>(
         &self,
         pre_hash: &B::Hash,
+	difficulty: U256,
+	should_stop: impl Fn() -> bool,
     ) -> Option<Vec<u8>> {
         let mut nonce: u64 = 0;
 
         loop {
+            if should_stop() {
+    return None;
+}
+
             let mut input = pre_hash.as_ref().to_vec();
             input.extend_from_slice(&nonce.to_le_bytes());
 
             let hash = BlakeTwo256::hash(&input);
             let hash_value = U256::from_big_endian(hash.as_bytes());
 
-            if hash_value <= self.difficulty {
+            if hash_value <= difficulty {
                 return Some(nonce.to_le_bytes().to_vec());
             }
 
@@ -75,7 +82,7 @@ mod tests {
 
         let pre_hash = <Block as BlockT>::Hash::from([1u8; 32]);
 
-        let seal = pow.cultivate::<Block>(&pre_hash);
+        let seal = pow.cultivate::<Block>(&pre_hash, target, || false);
 
         assert!(seal.is_some());
 
