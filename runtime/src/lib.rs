@@ -26,6 +26,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 
 pub mod genesis_config_presets;
+pub mod pallet_difficulty;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -216,7 +217,10 @@ mod runtime {
 	#[runtime::pallet_index(6)]
 	pub type Sudo = pallet_sudo;
 
-	// Include the custom logic from the pallet-template in the runtime.
-	#[runtime::pallet_index(7)]
-	pub type Template = pallet_template;
+        // Include the custom logic from the pallet-template in the runtime.
+        #[runtime::pallet_index(7)]
+        pub type Template = pallet_template;
+
+        #[runtime::pallet_index(8)]
+        pub type PlicataDifficulty = pallet_difficulty;
 }

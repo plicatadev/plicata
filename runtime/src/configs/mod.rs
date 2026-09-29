@@ -40,6 +40,7 @@ use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
+    pallet_difficulty,
 	AccountId, Aura, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
 	System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
@@ -60,6 +61,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
         /// Initial PoW target divisor for the Plicata development network.
         pub const POW_TARGET_DIVISOR: u128 = 1_000_000;
+    pub InitialTarget: sp_core::U256 = sp_core::U256::MAX / sp_core::U256::from(POW_TARGET_DIVISOR::get());
     /// Number of Growth Rings between difficulty adjustments.
     pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u32 = 10;
 
@@ -178,4 +180,8 @@ impl pallet_sudo::Config for Runtime {
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
+}
+
+impl pallet_difficulty::Config for Runtime {
+    type InitialTarget = InitialTarget;
 }
