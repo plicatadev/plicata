@@ -106,11 +106,16 @@ impl<C> PlicataPow<C> {
     }
 }
 
-impl<B: BlockT, C> PowAlgorithm<B> for PlicataPow<C> {
+impl<B: BlockT, C> PowAlgorithm<B> for PlicataPow<C>
+where
+    C: sp_api::ProvideRuntimeApi<B>,
+    C::Api: plicata_runtime::apis::PlicataDifficultyApi<B>,
+{
     type Difficulty = U256;
 
-    fn difficulty(&self, _parent: B::Hash) -> Result<Self::Difficulty, Error<B>> {
-        Ok(self.difficulty)
+    fn difficulty(&self, parent: B::Hash) -> Result<Self::Difficulty, Error<B>> {
+        self.current_target_at::<B>(parent)
+            .map_err(Error::Client)
     }
 
 fn verify(
