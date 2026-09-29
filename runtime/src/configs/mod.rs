@@ -60,6 +60,14 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
         /// Initial PoW target divisor for the Plicata development network.
         pub const POW_TARGET_DIVISOR: u128 = 1_000_000;
+    /// Number of Growth Rings between difficulty adjustments.
+    pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u32 = 10;
+
+    /// Target time between Growth Rings, in milliseconds.
+    pub const TARGET_BLOCK_TIME: u64 = 60_000;
+
+    /// Maximum difficulty adjustment multiplier per interval.
+    pub const MAX_DIFFICULTY_MULTIPLIER: u32 = 2;
 }
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
