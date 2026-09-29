@@ -1,15 +1,26 @@
+use plicata_runtime::apis::PlicataDifficultyApi;
+use sc_client_api::Backend;
 use sc_consensus_pow::{Error, PowAlgorithm};
 use sp_core::U256;
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, BlakeTwo256};
-use std::{thread, time::Duration};
+use std::{sync::Arc, thread, time::Duration};
 
 /// Initial PoW target for the Plicata development network.
 /// Higher targets make cultivation easier; lower targets make it harder.
 pub fn initial_target() -> U256 { U256::MAX / U256::from(plicata_runtime::configs::POW_TARGET_DIVISOR::get()) }
 
-#[derive(Clone)]
-pub struct PlicataPow {
+pub struct PlicataPow<C: ?Sized> {
+    client: Arc<C>,
     difficulty: U256,
+}
+
+impl<C: ?Sized> Clone for PlicataPow<C> {
+    fn clone(&self) -> Self {
+        Self {
+            client: self.client.clone(),
+            difficulty: self.difficulty,
+        }
+    }
 }
 
 /// Adjust the PoW target based on how long the last difficulty window took.
@@ -51,9 +62,20 @@ pub fn adjust_target(
     new_target
 }
 
-impl PlicataPow {
-    pub fn new(difficulty: U256) -> Self {
-        Self { difficulty }
+impl<C> PlicataPow<C> {
+    pub fn new(client: Arc<C>, difficulty: U256) -> Self {
+        Self { client, difficulty }
+    }
+    pub fn current_target_at<B>(
+        &self,
+        at: B::Hash,
+    ) -> Result<U256, sp_blockchain::Error>
+    where
+        B: BlockT,
+        C: sp_api::ProvideRuntimeApi<B>,
+        C::Api: plicata_runtime::apis::PlicataDifficultyApi<B>,
+    {
+        Ok(self.client.runtime_api().current_target(at)?)
     }
 
     pub fn cultivate<B: BlockT>(
@@ -84,7 +106,7 @@ impl PlicataPow {
     }
 }
 
-impl<B: BlockT> PowAlgorithm<B> for PlicataPow {
+impl<B: BlockT, C> PowAlgorithm<B> for PlicataPow<C> {
     type Difficulty = U256;
 
     fn difficulty(&self, _parent: B::Hash) -> Result<Self::Difficulty, Error<B>> {

@@ -65,7 +65,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 	});
 
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
-        let pow_algorithm = crate::pow::PlicataPow::new(
+        let pow_algorithm = crate::pow::PlicataPow::new(client.clone(), 
     crate::pow::initial_target(),
 );
 	let transaction_pool = Arc::from(
@@ -240,7 +240,7 @@ pub fn new_full<
         telemetry.as_ref().map(|x| x.handle()),
     );
 
-    let pow_algorithm = crate::pow::PlicataPow::new(
+    let pow_algorithm = crate::pow::PlicataPow::new(client.clone(), 
         crate::pow::initial_target(),
     );
 
@@ -275,7 +275,7 @@ task_manager
                 println!("🌱 Cultivator received candidate: pre_hash={:?}, difficulty={}", metadata.pre_hash, metadata.difficulty);
                 let version = mining_handle.version();
                 let handle = mining_handle.clone();
-                let pow = crate::pow::PlicataPow::new(metadata.difficulty);
+                let pow = crate::pow::PlicataPow::new(client.clone(), metadata.difficulty);
                 let pre_hash = metadata.pre_hash;
 
                 let seal = pow.cultivate::<Block>(
