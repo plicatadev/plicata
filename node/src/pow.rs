@@ -5,7 +5,7 @@ use std::{thread, time::Duration};
 
 /// Initial PoW target for the Plicata development network.
 /// Higher targets make cultivation easier; lower targets make it harder.
-pub fn initial_target() -> U256 { U256::MAX / 1_000_000 }
+pub fn initial_target() -> U256 { U256::MAX / U256::from(plicata_runtime::configs::POW_TARGET_DIVISOR::get()) }
 
 #[derive(Clone)]
 pub struct PlicataPow {
@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn cultivator_finds_nonce() {
-        let target = U256::MAX / 1_000_000;
+        let target = U256::MAX / U256::from(plicata_runtime::configs::POW_TARGET_DIVISOR::get());
         let pow = PlicataPow::new(target);
 
         let pre_hash = <Block as BlockT>::Hash::from([1u8; 32]);
