@@ -21,6 +21,16 @@ pub mod pallet {
     pub type CurrentTarget<T: Config> =
         StorageValue<_, U256, ValueQuery>;
 
+    impl<T: Config> Pallet<T> {
+        pub fn target() -> U256 {
+            CurrentTarget::<T>::get()
+        }
+
+        pub fn set_target(target: U256) {
+            CurrentTarget::<T>::put(target);
+        }
+    }
+
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         pub initial_target: U256,

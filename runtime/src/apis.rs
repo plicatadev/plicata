@@ -42,11 +42,24 @@ use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
+        pallet_difficulty,
 	AccountId, Aura, Balance, Block, Executive, Grandpa, InherentDataExt, Nonce, Runtime,
 	RuntimeCall, RuntimeGenesisConfig, SessionKeys, System, TransactionPayment, VERSION,
 };
 
+sp_api::decl_runtime_apis! {
+    pub trait PlicataDifficultyApi {
+        fn current_target() -> sp_core::U256;
+    }
+}
+
 impl_runtime_apis! {
+        impl self::PlicataDifficultyApi<Block> for Runtime {
+                fn current_target() -> sp_core::U256 {
+                        pallet_difficulty::Pallet::<Runtime>::target()
+                }
+        }
+
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION
