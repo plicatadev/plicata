@@ -12,6 +12,7 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use plicata_runtime::{self, apis::RuntimeApi, opaque::Block};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
+use sp_core::Encode;
 
 pub(crate) type FullClient = sc_service::TFullClient<
 	Block,
@@ -252,7 +253,7 @@ pub fn new_full<
         proposer_factory,
         sync_service.clone(),
         sync_service.clone(),
-        None,
+        Some(sp_keyring::Sr25519Keyring::Alice.to_account_id().encode()),
         move |_, ()| async move {
             let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
             Ok((timestamp,))

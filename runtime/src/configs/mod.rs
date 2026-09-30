@@ -40,10 +40,10 @@ use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
-    pallet_difficulty,
+    pallet_difficulty, pallet_harvest,
 	AccountId, Aura, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
-	System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
+	System, EXISTENTIAL_DEPOSIT, UNIT, SLOT_DURATION, VERSION,
 };
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -70,6 +70,9 @@ parameter_types! {
 
     /// Maximum difficulty adjustment multiplier per interval.
     pub const MAX_DIFFICULTY_MULTIPLIER: u32 = 2;
+
+/// Development Harvest per Growth Ring: 10 PLIC.
+pub const HARVEST_REWARD: u128 = 10 * UNIT;
 }
 
 /// All migrations of the runtime, aside from the ones declared in the pallets.
@@ -184,4 +187,9 @@ impl pallet_template::Config for Runtime {
 
 impl pallet_difficulty::Config for Runtime {
     type InitialTarget = InitialTarget;
+}
+
+impl pallet_harvest::Config for Runtime {
+    type Currency = Balances;
+    type HarvestReward = HARVEST_REWARD;
 }

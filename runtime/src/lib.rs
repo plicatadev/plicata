@@ -27,6 +27,7 @@ pub use sp_runtime::BuildStorage;
 
 pub mod genesis_config_presets;
 pub mod pallet_difficulty;
+pub mod pallet_harvest;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -223,4 +224,7 @@ mod runtime {
 
         #[runtime::pallet_index(8)]
         pub type PlicataDifficulty = pallet_difficulty;
+
+        #[runtime::pallet_index(9)]
+        pub type PlicataHarvest = pallet_harvest;
 }
