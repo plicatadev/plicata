@@ -21,6 +21,7 @@ use frame_support::build_struct_json_patch;
 use serde_json::Value;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_genesis_builder::{self, PresetId};
+use sp_core::crypto::AccountId32;
 use sp_keyring::Sr25519Keyring;
 
 // Returns the genesis config presets populated with given parameters.
@@ -73,11 +74,45 @@ pub fn local_config_genesis() -> Value {
 	)
 }
 
+/// Plicata Alpha genesis preset.
+pub fn alpha_config_genesis() -> Value {
+        const UNIT: u128 = 1_000_000_000_000;
+
+        let grandpa_authority = GrandpaId::from(
+                sp_core::ed25519::Public::from_raw([
+                        0x2d, 0x69, 0x6b, 0x24, 0x4b, 0xc9, 0xfd, 0x5f,
+                        0x8c, 0x53, 0xa4, 0xf5, 0x5f, 0x2b, 0x86, 0x0f,
+                        0x69, 0xb3, 0x9f, 0xff, 0x24, 0xe1, 0x5d, 0xc1,
+                        0x44, 0x36, 0xf7, 0x37, 0xc7, 0x7d, 0xf8, 0x44,
+                ])
+        );
+
+        let seedbank: AccountId = AccountId32::new([
+                0xd8, 0xd4, 0xf0, 0x4a, 0x4e, 0xb5, 0xbd, 0x3f,
+                0x54, 0x9c, 0x73, 0x0b, 0x69, 0xb9, 0xb7, 0x0e,
+                0x2b, 0x82, 0xa5, 0x5c, 0x4d, 0x23, 0x64, 0xfd,
+                0xbe, 0xfe, 0x1f, 0x02, 0xc9, 0xe0, 0x60, 0x7b,
+        ]).into();
+
+        build_struct_json_patch!(RuntimeGenesisConfig {
+                balances: BalancesConfig {
+                        balances: vec![(seedbank.clone(), 1_000 * UNIT)],
+                },
+                grandpa: pallet_grandpa::GenesisConfig {
+                        authorities: vec![(grandpa_authority, 1)],
+                },
+                sudo: SudoConfig {
+                        key: Some(seedbank),
+                },
+        })
+}
+
 /// Provides the JSON representation of predefined genesis config for given `id`.
 pub fn get_preset(id: &PresetId) -> Option<Vec<u8>> {
 	let patch = match id.as_ref() {
 		sp_genesis_builder::DEV_RUNTIME_PRESET => development_config_genesis(),
 		sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET => local_config_genesis(),
+                "plicata_alpha" => alpha_config_genesis(),
 		_ => return None,
 	};
 	Some(
@@ -92,5 +127,6 @@ pub fn preset_names() -> Vec<PresetId> {
 	vec![
 		PresetId::from(sp_genesis_builder::DEV_RUNTIME_PRESET),
 		PresetId::from(sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET),
+                PresetId::from("plicata_alpha"),
 	]
 }
