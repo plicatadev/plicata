@@ -6178,23 +6178,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-aura"
-version = "44.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb444f29c9df8a1ea89b4c8b6a026a119b13e5f55fff8c6901103ec8de2a6ad8"
-dependencies = [
- "frame-support",
- "frame-system",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-application-crypto",
- "sp-consensus-aura",
- "sp-runtime",
-]
-
-[[package]]
 name = "pallet-authority-discovery"
 version = "45.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6807,7 +6790,6 @@ dependencies = [
  "sc-cli",
  "sc-client-api",
  "sc-consensus",
- "sc-consensus-aura",
  "sc-consensus-grandpa",
  "sc-consensus-pow",
  "sc-executor",
@@ -6820,7 +6802,6 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
- "sp-consensus-aura",
  "sp-core",
  "sp-genesis-builder",
  "sp-inherents",
@@ -6844,7 +6825,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
  "pallet-sudo",
@@ -6857,7 +6837,6 @@ dependencies = [
  "serde_json",
  "sp-api",
  "sp-block-builder",
- "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
  "sp-genesis-builder",
@@ -8598,38 +8577,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-state-machine",
- "substrate-prometheus-endpoint",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "sc-consensus-aura"
-version = "0.55.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d0a1f71f569e49cd18d5e804782535e017d9f1672defbec1a646f0004f63104"
-dependencies = [
- "async-trait",
- "fork-tree",
- "futures",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.5",
- "sc-block-builder",
- "sc-client-api",
- "sc-consensus",
- "sc-consensus-slots",
- "sc-telemetry",
- "sp-api",
- "sp-application-crypto",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-consensus-aura",
- "sp-consensus-slots",
- "sp-core",
- "sp-inherents",
- "sp-keystore",
- "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror 1.0.69",
 ]
