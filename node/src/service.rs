@@ -126,6 +126,7 @@ pub fn new_full<
 	N: sc_network::NetworkBackend<Block, <Block as sp_runtime::traits::Block>::Hash>,
 >(
 	config: Configuration,
+	cultivator_plot: Option<plicata_runtime::AccountId>,
 ) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
 		client,
@@ -253,7 +254,7 @@ pub fn new_full<
         proposer_factory,
         sync_service.clone(),
         sync_service.clone(),
-        Some(sp_keyring::Sr25519Keyring::Alice.to_account_id().encode()),
+        cultivator_plot.map(|plot| plot.encode()),
         move |_, ()| async move {
             let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
             Ok((timestamp,))

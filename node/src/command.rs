@@ -9,6 +9,7 @@ use sc_cli::SubstrateCli;
 use sc_service::PartialComponents;
 use plicata_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sp_keyring::Sr25519Keyring;
+use sp_core::crypto::Ss58Codec;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
@@ -48,6 +49,13 @@ impl SubstrateCli for Cli {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
+
+	let cultivator_plot = cli
+		.cultivator_plot
+		.as_deref()
+		.map(plicata_runtime::AccountId::from_ss58check)
+		.transpose()
+		.map_err(|e| sc_cli::Error::Input(format!("Invalid cultivator Plot: {e}")))?;
 
 	match &cli.subcommand {
 		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -190,10 +198,10 @@ pub fn run() -> sc_cli::Result<()> {
 							plicata_runtime::opaque::Block,
 							<plicata_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
 						>,
-					>(config)
+					>(config, cultivator_plot.clone())
 					.map_err(sc_cli::Error::Service),
 					sc_network::config::NetworkBackendType::Litep2p =>
-						service::new_full::<sc_network::Litep2pNetworkBackend>(config)
+						service::new_full::<sc_network::Litep2pNetworkBackend>(config, cultivator_plot.clone())
 							.map_err(sc_cli::Error::Service),
 				}
 			})
