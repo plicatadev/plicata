@@ -5,7 +5,7 @@ use sp_core::U256;
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, BlakeTwo256};
 use std::{sync::Arc, thread, time::Duration};
 
-/// Initial PoW target for the Plicata development network.
+/// Initial PoW target for the Plicata network.
 /// Higher targets make cultivation easier; lower targets make it harder.
 pub fn initial_target() -> U256 { U256::MAX / U256::from(plicata_runtime::configs::POW_TARGET_DIVISOR::get()) }
 

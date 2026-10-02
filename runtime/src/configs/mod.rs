@@ -58,8 +58,8 @@ parameter_types! {
 	);
 	pub RuntimeBlockLength: BlockLength = BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
-        /// Initial PoW target divisor for the Plicata development network.
-        pub const POW_TARGET_DIVISOR: u128 = 1_000_000;
+        /// Initial PoW target divisor for the Plicata network.
+        pub const POW_TARGET_DIVISOR: u128 = 80_000_000;
     pub InitialTarget: sp_core::U256 = sp_core::U256::MAX / sp_core::U256::from(POW_TARGET_DIVISOR::get());
     /// Number of Growth Rings between difficulty adjustments.
     pub const DIFFICULTY_ADJUSTMENT_INTERVAL: u32 = 10;
