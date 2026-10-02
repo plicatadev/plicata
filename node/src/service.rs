@@ -124,6 +124,7 @@ pub fn new_full<
 	N: sc_network::NetworkBackend<Block, <Block as sp_runtime::traits::Block>::Hash>,
 >(
 	config: Configuration,
+	cultivate: bool,
 	cultivator_plot: Option<plicata_runtime::AccountId>,
 ) -> Result<TaskManager, ServiceError> {
 	let sc_service::PartialComponents {
@@ -231,7 +232,7 @@ pub fn new_full<
 		tracing_execute_block: None,
 	})?;
 
-	if role.is_authority() {
+	if cultivate {
     let proposer_factory = sc_basic_authorship::ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
