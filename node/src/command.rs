@@ -50,6 +50,7 @@ impl SubstrateCli for Cli {
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
+	let cultivate = cli.cultivate;
 
 	let cultivator_plot = cli
 		.cultivator_plot
@@ -199,10 +200,10 @@ pub fn run() -> sc_cli::Result<()> {
 							plicata_runtime::opaque::Block,
 							<plicata_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
 						>,
-					>(config, cultivator_plot.clone())
+					>(config, cultivate, cultivator_plot.clone())
 					.map_err(sc_cli::Error::Service),
 					sc_network::config::NetworkBackendType::Litep2p =>
-						service::new_full::<sc_network::Litep2pNetworkBackend>(config, cultivator_plot.clone())
+						service::new_full::<sc_network::Litep2pNetworkBackend>(config, cultivate, cultivator_plot.clone())
 							.map_err(sc_cli::Error::Service),
 				}
 			})

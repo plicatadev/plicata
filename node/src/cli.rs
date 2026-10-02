@@ -6,6 +6,10 @@ pub struct Cli {
 	#[clap(flatten)]
 	pub run: sc_cli::RunCmd,
 
+	/// Enable Plicata PoW Cultivation on this node.
+	#[arg(long)]
+	pub cultivate: bool,
+
 	/// Plicata Plot that receives Harvest rewards from Cultivation.
 	#[arg(long)]
 	pub cultivator_plot: Option<String>,
